@@ -20,6 +20,29 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else ['*']
 
+# CSRF Trusted Origins for Railway and other production domains
+CSRF_TRUSTED_ORIGINS = []
+
+# Check for Railway public domain (Railway may set RAILWAY_PUBLIC_DOMAIN)
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+    CSRF_TRUSTED_ORIGINS.append(f"https://{domain}")
+
+# Check for custom CSRF trusted origins environment variable
+if os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    origins = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')]
+    CSRF_TRUSTED_ORIGINS.extend(origins)
+
+# For development, allow localhost
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend(['http://localhost:8000', 'http://127.0.0.1:8000'])
+
+# If in production and no origins set, try to get from ALLOWED_HOSTS
+if not CSRF_TRUSTED_ORIGINS and not DEBUG and ALLOWED_HOSTS and ALLOWED_HOSTS != ['*']:
+    for host in ALLOWED_HOSTS:
+        if host and host != '*':
+            CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
+
 
 # Application definition
 
